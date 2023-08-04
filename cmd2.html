@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Management Tool</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      margin: 20px;
+      background-color: #f8f9fa;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin: 0;
+      padding: 30px 0;
+      background-color: #007bff;
+    }
+
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+    }
+
+    button[type="submit"] {
+      padding: 12px 30px;
+      background-color: #007bff;
+      background-image: linear-gradient(45deg, #007bff, #0056b3);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    #dropArea {
+      border: 2px dashed #ccc;
+      padding: 50px;
+      text-align: center;
+      font-size: 20px;
+      color: #555;
+      border-radius: 50%;
+      margin: 50px auto;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+
+    #dropArea.dragging {
+      border-color: #007bff;
+      transform: scale(0.9);
+    }
+
+    #savedContent {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #contentList {
+      list-style: none;
+      padding: 0;
+    }
+
+    #contentList li {
+        position: relative;
+      margin-bottom: 10px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f7f7f7;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: #333;
+      font-size: 16px;
+      line-height: 1.4;
+      margin: 20px 0;
+      padding-left: 80px;
+    }
+
+    #contentList li:before {
+      content: '\f15c'; /* Unicode for the 'file' icon from FontAwesome */
+      font-family: 'Font Awesome 5 Free';
+      font-weight: 900;
+      position: absolute;
+      left: 25px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+    }
+
+
+    @media (max-width: 600px) {
+      form {
+        padding: 20px;
+      }
+      .previewItem {
+        width: 80px;
+        height: 80px;
+      }
+      #clearButton {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: #007bff;
+      }
+    }
+    #previewArea {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .previewItem {
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .previewItem img, .previewItem video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    #clearButton {
+      display: block;
+      margin-top: 20px;
+      padding: 12px 30px;
+      background-color:#021e3c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #clearButton:hover {
+      background-color: #c82333;
+    }
+    nav {
+        position: sticky;
+        top: 0;
+        background-color: grey; /* Blue background color for navigation bar */
+        padding: 10px 0;
+        z-index: 1;
+        display: flex;
+        justify-content: space-around;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+  
+      nav a {
+        color: #fff; /* White text color for navigation links */
+        text-decoration: none;
+        padding: 8px 15px;
+        margin: 0 5px;
+        border-radius: 20px;
+        transition: background-color 0.3s ease;
+        position: relative;
+      }
+  
+      nav a:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+      }
+      nav a:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      background-color: rgba(255, 255, 255, 0.1);
+      z-index: -1;
+      transform: scale(0);
+      transition: transform 0.3s ease;
+    }
+
+    nav a:hover:before {
+      transform: scale(1);
+    }
+
+        /* Styling for the pagination */
+        .pagination {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      padding: 0;
+    }
+
+    .pagination li {
+      margin: 0 5px;
+      display: inline-block;
+    }
+
+    .pagination a {
+      padding: 6px 10px;
+      text-decoration: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    .pagination a:hover {
+      background-color: #0056b3;
+    }
+
+    .deleteButton {
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-left: 5px;
+    }
+
+    .deleteButton:hover {
+      background-color: #c82333;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+
+  <body>
+    <nav>
+      <a href="#">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="#dropArea">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>Upload</span>
+      </a>
+      <a href="#savedContent">
+        <i class="fas fa-save"></i>
+        <span>Saved Content</span>
+      </a>
+      <a href="#about">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>About</span>
+      </a>
+    </nav>
+  <h1>Content Management Tool</h1>
+
+  <div id="dropArea">
+    <p>Drag and drop images and videos here, or click to select files.</p>
+    <input type="file" id="fileInput" accept="image/*, video/*" multiple style="display:none;">
+  </div>
+
+  <div id="previewArea">
+    <!-- Preview area for images and videos -->
+  </div>
+
+  <form id="contentForm">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" required><br>
+
+    <label for="content">Content:</label>
+    <textarea id="content" name="content" rows="4" required></textarea><br>
+
+    <button type="button" id="clearButton">Clear</button>
+    <button type="submit">Save Content</button>
+  </form>
+
+  <div id="savedContent">
+    <h2>Saved Content</h2>
+
+    <!-- Content list with pagination and search functionality -->
+    <input type="text" id="searchInput" placeholder="Search content...">
+    <ul id="contentList">
+        <li><a href="#">1</a></li>
+      <li><a href="#">2</a></li>
+      <!-- Display saved content here using JavaScript -->
+    </ul>
+  </div>
+
+  <div id="about">
+    <h2>About Content Management Tool</h2>
+    <p>The Content Management Tool is a powerful web application that allows you to easily manage and organize your multimedia content. Whether you want to upload images, videos, or any other media files, this tool simplifies the process with a user-friendly drag-and-drop interface.</p>
+    <p>Upload multiple files at once, view previews of your content, and save it for future access. The tool utilizes modern technologies, making it responsive and accessible across various devices, including desktops, tablets, and mobile phones.</p>
+    <p>It's a versatile tool suitable for personal use, creative projects, or professional content management. Start organizing your multimedia content effortlessly with the Content Management Tool today!</p>
+    <p>This project is made by <b>Deepanshu Varshney</b> for <b>Bharat Intern</b></p>
+  </div>
+
+
+  <script>
+    const dropArea = document.getElementById("dropArea");
+
+dropArea.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  dropArea.classList.add("dragging");
+});
+
+dropArea.addEventListener("dragleave", (event) => {
+  event.preventDefault();
+  dropArea.classList.remove("dragging");
+});
+
+dropArea.addEventListener("drop", (event) => {
+  event.preventDefault();
+  dropArea.classList.remove("dragging");
+
+  const files = event.dataTransfer.files;
+  handleFiles(files);
+});
+
+document.getElementById("fileInput").addEventListener("change", (event) => {
+  const files = event.target.files;
+  handleFiles(files);
+});
+
+function handleFiles(files) {
+  const contentList = document.getElementById("contentList");
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const newItem = document.createElement("li");
+
+    if (file.type.startsWith("image/")) {
+      newItem.innerHTML = `<strong>Image:</strong> ${file.name}`;
+    } else if (file.type.startsWith("video/")) {
+      newItem.innerHTML = `<strong>Video:</strong> ${file.name}`;
+    } else {
+      continue; // Skip unsupported file types
+    }
+
+    contentList.appendChild(newItem);
+  }
+}
+
+document.getElementById("contentForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const titleInput = document.getElementById("title");
+  const contentInput = document.getElementById("content");
+
+  const title = titleInput.value;
+  const content = contentInput.value;
+
+  // You can perform AJAX requests or save data to the server here
+  // For demonstration purposes, let's just display the content on the page
+
+  const contentList = document.getElementById("contentList");
+  const newItem = document.createElement("li");
+  newItem.innerHTML = `<strong>${title}</strong>: ${content}`;
+  contentList.appendChild(newItem);
+
+  titleInput.value = '';
+  contentInput.value = '';
+});
+function handleFiles(files) {
+      const contentList = document.getElementById("contentList");
+      const previewArea = document.getElementById("previewArea");
+      previewArea.innerHTML = ''; // Clear previous previews
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const newItem = document.createElement("li");
+
+        if (file.type.startsWith("image/")) {
+          newItem.innerHTML = `<strong>Image:</strong> ${file.name}`;
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.className = "previewItem";
+          previewArea.appendChild(img);
+        } else if (file.type.startsWith("video/")) {
+          newItem.innerHTML = `<strong>Video:</strong> ${file.name}`;
+          const video = document.createElement("video");
+          video.src = URL.createObjectURL(file);
+          video.className = "previewItem";
+          video.setAttribute("controls", true);
+          previewArea.appendChild(video);
+        } else {
+          continue; // Skip unsupported file types
+        }
+
+        contentList.appendChild(newItem);
+        document.getElementById("clearButton").addEventListener("click", function() {
+      const previewArea = document.getElementById("previewArea");
+      const titleInput = document.getElementById("title");
+      const contentInput = document.getElementById("content");
+
+      // Clear file previews
+      previewArea.innerHTML = '';
+      // Clear file input value
+      document.getElementById("fileInput").value = '';
+      // Clear form fields
+      titleInput.value = '';
+      contentInput.value = '';
+    });
+      }
+    }
+        // Function to save content items to local storage
+        function saveToLocalStorage(title, content) {
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+      savedContent.push({ title, content });
+      localStorage.setItem('savedContent', JSON.stringify(savedContent));
+    }
+
+    // Function to load content items from local storage
+    function loadFromLocalStorage() {
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+      const contentList = document.getElementById("contentList");
+      contentList.innerHTML = ''; // Clear previous content list
+
+      for (const item of savedContent) {
+        const newItem = document.createElement("li");
+        newItem.innerHTML = `<strong>${item.title}</strong>: ${item.content}`;
+        contentList.appendChild(newItem);
+      }
+    }
+
+    // Load saved content on page load
+    window.addEventListener('load', loadFromLocalStorage);
+
+    // JavaScript code remains the same
+    // ...
+    // ...
+
+    document.getElementById("contentForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const titleInput = document.getElementById("title");
+      const contentInput = document.getElementById("content");
+
+      const title = titleInput.value;
+      const content = contentInput.value;
+
+      // Save content to local storage
+      saveToLocalStorage(title, content);
+
+      // You can perform AJAX requests or save data to the server here
+      // For demonstration purposes, let's just display the content on the page
+
+      const contentList = document.getElementById("contentList");
+      const newItem = document.createElement("li");
+      newItem.innerHTML = `<strong>${title}</strong>: ${content}`;
+      contentList.appendChild(newItem);
+
+      titleInput.value = '';
+      contentInput.value = '';
+    });
+
+    // Clear button event handler
+    document.getElementById("clearButton").addEventListener("click", function() {
+      // Clear local storage
+      localStorage.removeItem('savedContent');
+
+      const previewArea = document.getElementById("previewArea");
+      const titleInput = document.getElementById("title");
+      const contentInput = document.getElementById("content");
+
+      // Clear file previews
+      previewArea.innerHTML = '';
+      // Clear file input value
+      document.getElementById("fileInput").value = '';
+      // Clear form fields
+      titleInput.value = '';
+      contentInput.value = '';
+
+      // Clear the content list on the page
+      const contentList = document.getElementById("contentList");
+      contentList.innerHTML = '';
+    });
+
+        // Function to display content items with pagination
+        function displayContentItems(pageNumber) {
+      const itemsPerPage = 5;
+      const startIndex = (pageNumber - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const contentList = document.getElementById("contentList");
+
+      // Clear previous content list
+      contentList.innerHTML = '';
+
+      // Load saved content from local storage
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+
+      // Display content items for the current page
+      for (let i = startIndex; i < endIndex && i < savedContent.length; i++) {
+        const item = savedContent[i];
+        const newItem = document.createElement("li");
+        newItem.innerHTML = `<strong>${item.title}</strong>: ${item.content}`;
+        contentList.appendChild(newItem);
+      }
+    }
+
+    // Function to add pagination links
+    function addPaginationLinks(totalPages) {
+      const pagination = document.querySelector(".pagination");
+      pagination.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = i;
+        pagination.appendChild(document.createElement("li")).appendChild(link);
+
+        // Add event listener for pagination links
+        link.addEventListener("click", function() {
+          displayContentItems(i);
+        });
+      }
+    }
+
+    // Function to search for content items
+    function searchContent() {
+      const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+      const filteredContent = savedContent.filter(item =>
+        item.title.toLowerCase().includes(searchTerm)
+      );
+      displayContentItems(1); // Show first page of search results
+      addPaginationLinks(Math.ceil(filteredContent.length / 5));
+    }
+
+    // Load saved content on page load
+    window.addEventListener('load', function() {
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+      addPaginationLinks(Math.ceil(savedContent.length / 5));
+      displayContentItems(1); // Show first page of saved content
+    });
+
+    // Search functionality
+    document.getElementById("searchInput").addEventListener("keyup", searchContent);
+
+
+    function deleteContentItem(index) {
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+
+      // Remove the content item at the specified index
+      savedContent.splice(index, 1);
+
+      // Update local storage with the modified content list
+      localStorage.setItem('savedContent', JSON.stringify(savedContent));
+
+      // Reload the content list to reflect the changes
+      displayContentItems(1);
+    }
+
+    // Function to edit a content item
+    function editContentItem(index) {
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+
+      // Get the content item at the specified index
+      const item = savedContent[index];
+
+      // Prompt the user for a new title for the content item
+      const newTitle = prompt("Enter a new title:", item.title);
+
+      // Update the title if the user provided one
+      if (newTitle !== null && newTitle.trim() !== "") {
+        item.title = newTitle;
+        localStorage.setItem('savedContent', JSON.stringify(savedContent));
+        displayContentItems(1);
+      }
+    }
+
+    // Function to display content items with pagination
+    function displayContentItems(pageNumber) {
+      const itemsPerPage = 5;
+      const startIndex = (pageNumber - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const contentList = document.getElementById("contentList");
+
+      // Clear previous content list
+      contentList.innerHTML = '';
+
+      // Load saved content from local storage
+      const savedContent = JSON.parse(localStorage.getItem('savedContent')) || [];
+
+      // Display content items for the current page
+      for (let i = startIndex; i < endIndex && i < savedContent.length; i++) {
+        const item = savedContent[i];
+        const newItem = document.createElement("li");
+        newItem.innerHTML = `
+          <strong>${item.title}</strong>: ${item.content}
+          <button class="deleteButton" onclick="deleteContentItem(${i})">Delete</button>
+          <button class="deleteButton" onclick="editContentItem(${i})">Edit</button>
+        `;
+        contentList.appendChild(newItem);
+      }
+    }
+  </script>
+</body>
+</html>
